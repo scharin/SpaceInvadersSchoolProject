@@ -1,20 +1,21 @@
 #ifndef INVADERS_SHIP
 #define INVADERS_SHIP
 
-class ConGame;
 #include "SFML/Graphics.hpp"
-#include "ConGame.h"
+#include "Entity.h"
+#include "Game.h"
 
-class ShipEntity
+class ShipEntity : public Entity
 {
 public:
-	ShipEntity(ConGame *game);
+	ShipEntity(Game *game);
 	~ShipEntity();
-	void draw();
+	void update(float deltaTime);
 
 private:
-	ConGame *mGame;
-	sf::Sprite mSprite;
+	void updatePosition(float deltaTime);
+	void constrainPosition();
+	void handleFire();
 };
 
 #endif

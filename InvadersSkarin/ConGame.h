@@ -15,6 +15,7 @@ public:
 	sf::Sprite createSprite(std::string filename, sf::Vector2f position) override;
 	void run() override;
 	void draw(sf::Sprite &sprite) override;
+	sf::Vector2f getWindowSize() const override;
 
 private:
 	TextRes mTextureManager;
@@ -22,9 +23,10 @@ private:
 	
 	void handleWindowEvents();
 	void createShip();
+	void updateEntities(float deltaTime);
 	void drawEntities();
 
-	typedef std::vector<ShipEntity*> EntityVector;
+	typedef std::vector<Entity*> EntityVector;
 	EntityVector mEntities;
 };
 
