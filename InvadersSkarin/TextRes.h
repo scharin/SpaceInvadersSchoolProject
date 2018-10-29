@@ -14,7 +14,6 @@ public:
 	void loadTexture(const std::string& name, const std::string& filename);
 	sf::Texture& getRef(const std::string& texture);
 
-	void printLoadedTextures();
 private:
 	std::map<std::string, sf::Texture> mTextures;
 };

@@ -34,9 +34,3 @@ void TextRes::loadTexture(const string& name, const std::string& filename) {
 sf::Texture& TextRes::getRef(const string& texture) {
 	return mTextures.at(texture);
 }
-
-void TextRes::printLoadedTextures() {
-	for (auto it = mTextures.cbegin(); it != mTextures.cend(); ++it) {
-		cout << "TextureName: " << it->first << endl;
-	}
-}

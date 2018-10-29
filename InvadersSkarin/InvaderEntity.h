@@ -1,14 +1,14 @@
-#ifndef INVADERS_SHIP
-#define INVADERS_SHIP
+#ifndef INVADERS_INVADER
+#define INVADERS_INVADER
 
 #include "SFML/Graphics.hpp"
 #include "Entity.h"
 
-class ShipEntity : public Entity
+class InvaderEntity : public Entity
 {
 public:
-	ShipEntity(Game *game, sf::Vector2f position);
-	~ShipEntity();
+	InvaderEntity(Game *game, sf::Vector2f position, sf::Vector2f direction);
+	~InvaderEntity();
 	void update(float deltaTime);
 	void collide(Entity *otherEntity) override;
 	EntityFaction getFaction() const override;
@@ -16,8 +16,9 @@ public:
 
 private:
 	void updatePosition(float deltaTime);
-	void constrainPosition();
 	void handleFire();
+
+	sf::Vector2f mDirection;
 };
 
 #endif

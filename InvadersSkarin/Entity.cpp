@@ -19,3 +19,7 @@ void Entity::draw() {
 Vector2f Entity::getPosition() const {
 	return this->mSprite.getPosition();
 }
+
+float Entity::getRadius() const {
+	return this->mRadius;
+}

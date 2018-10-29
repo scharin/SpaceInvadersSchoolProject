@@ -9,16 +9,27 @@ namespace {
 using namespace sf;
 using namespace std;
 
-ShipEntity::ShipEntity(Game *game) :
+ShipEntity::ShipEntity(Game *game, Vector2f position) :
 	Entity(game)
 {
-	mSprite = mGame->createSprite("ship", sf::Vector2f(200, 200));
+	mSprite = mGame->createSprite("ship", position);
 	mRadius = RADIUS;
 	mVelocity = VELOCITY;
 }
-
 ShipEntity::~ShipEntity()
 {
+}
+
+EntityFaction ShipEntity::getFaction() const {
+	return EntityFaction::FRIEND;
+}
+EntityType ShipEntity::getType() const {
+	return EntityType::SHIP;
+}
+void ShipEntity::collide(Entity *otherEntity) {
+	if (otherEntity->getFaction() == EntityFaction::ENEMY) {
+		mGame->remove(this);
+	}
 }
 
 void ShipEntity::update(float deltaTime) {
