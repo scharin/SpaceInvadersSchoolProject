@@ -15,8 +15,9 @@ namespace {
 	const float INVADERS_SPAWN_INCREMENT = 0.1f;
 }
 
-ConGame::ConGame() : 
+ConGame::ConGame() :
 	mRenderWindow(videoMode, windowTitle, Style::Titlebar | Style::Close),
+	mGameOver(false),
 	mTime(0.0f),
 	mSpawnTime(3.0f),
 	mEntities(),
@@ -26,6 +27,8 @@ ConGame::ConGame() :
 	mRenderWindow.setFramerateLimit(FRAMERATE_LIMIT);
 	mTextureManager.loadTextures();
 	mEntities.push_back(new ShipEntity(this, Vector2f(360, 500)));
+	createText();
+	killedInvaders = 0;
 }
 ConGame::~ConGame() {
 	cout << "----------\nGame ends\nDestroying all entities\n----------\n";
@@ -45,16 +48,72 @@ void ConGame::run() {
 		float deltaTime = frameClock.restart().asSeconds();
 		handleWindowEvents();
 		mRenderWindow.clear(bgColor);
-		mTime += deltaTime;
+		if (!mGameOver) {
+			mTime += deltaTime;
 
-		updateEntities(deltaTime);
-		spawnInvaders(deltaTime);
-		collideEntities();
-		destroyOldEntites();
-		integrateNewEntities();
-
-		drawEntities();
+			updateEntities(deltaTime);
+			spawnInvaders(deltaTime);
+			collideEntities();
+			destroyOldEntites();
+			destroyDistantEntities();
+			integrateNewEntities();
+			drawEntities();
+			updateText();
+			drawText();
+		}
+		if (mGameOver) {
+			mText.setPosition(250, 350);
+			mText.setString(mScoreText + "\n\nPress escape or\nClose the window to end.");
+			drawText();
+		}
 		mRenderWindow.display();
+	}
+}
+
+Vector2f ConGame::getWindowSize() const {
+	return Vector2f(mRenderWindow.getSize());
+}
+
+Sprite ConGame::createSprite(string filename, Vector2f position) {
+	Sprite sprite;
+	sprite.setTexture(mTextureManager.getRef(filename));
+	sprite.setOrigin(
+		Vector2f(
+			sprite.getGlobalBounds().height / 2,
+			sprite.getGlobalBounds().width / 2
+		)
+	);
+	sprite.setPosition(position);
+
+	return sprite;
+}
+
+void ConGame::draw(Sprite& sprite) {
+	mRenderWindow.draw(sprite);
+}
+
+void ConGame::add(Entity *entity) {
+	mNewEntities.push_back(entity);
+}
+
+void ConGame::remove(Entity *entity) {
+	mOldEntities.push_back(entity);
+}
+
+void ConGame::gameOver(bool gameover) {
+	mGameOver = gameover;
+}
+
+void ConGame::updateKills() {
+	killedInvaders += 1;
+}
+
+void ConGame::handleWindowEvents() {
+	Event event;
+	while (mRenderWindow.pollEvent(event)) {
+		if (event.type == Event::Closed || Keyboard::isKeyPressed(Keyboard::Escape)) {
+			mRenderWindow.close();
+		}
 	}
 }
 
@@ -89,11 +148,38 @@ Vector2f ConGame::getSpawnPosition() {
 	return Vector2f(xAxis, -yAxis);
 }
 
+void ConGame::updateEntities(float deltaTime) {
+	for (EntityVector::size_type i = 0; i < mEntities.size(); i++) {
+		mEntities[i]->update(deltaTime);
+	}
+}
+
 void ConGame::integrateNewEntities() {
 	for (EntityVector::size_type i = 0; i < mNewEntities.size(); i++) {
 		mEntities.push_back(mNewEntities[i]);
 	}
 	mNewEntities.clear();
+}
+
+void ConGame::collideEntities() {
+	/* Gets all the visible entities in an array */
+	EntityVector visibleEntities;
+	for (EntityVector::size_type i = 0; i < mEntities.size(); i++) {
+		if (mEntities[i]->isVisible()) {
+			visibleEntities.push_back(mEntities[i]);
+		}
+	}
+	/* Checks collision on only visible entities */
+	for (EntityVector::size_type i = 0; i < visibleEntities.size(); i++) {
+		Entity *entity0 = visibleEntities[i];
+		for (EntityVector::size_type j = i + 1; j < visibleEntities.size(); j++) {
+			Entity *entity1 = visibleEntities[j];
+			if (overlap(entity0, entity1)) {
+				entity0->collide(entity1);
+				entity1->collide(entity0);
+			}
+		}
+	}
 }
 
 void ConGame::destroyOldEntites() {
@@ -109,20 +195,36 @@ void ConGame::destroyOldEntites() {
 	mEntities = remainingEntities;
 }
 
-void ConGame::collideEntities() {
-	//EntityVector visibleEntities = getVisibleEntities();
-	//for (EntityVector::size_type i = 0; i < visibleEntities.size; i++) {
+void ConGame::destroyDistantEntities() {
+	EntityVector remainingEntities;
+	float maxY = (float)mRenderWindow.getSize().y;
+	float maxX = (float)mRenderWindow.getSize().x;
+	Vector2f pos;
+	float rad;
+
 	for (EntityVector::size_type i = 0; i < mEntities.size(); i++) {
-		Entity *entity0 = mEntities[i]; //visibleEntities[i];
-		//for (EntityVector::size_type j = i + 1; j < visibleEntities.size(); j++) {
-		for (EntityVector::size_type j = i + 1; j < mEntities.size(); j++) {
-			Entity *entity1 = mEntities[j]; //visibleEntities[j];
-			if (overlap(entity0, entity1)) {
-				entity0->collide(entity1);
-				entity1->collide(entity0);
-			}
+		Entity *entity = mEntities[i];
+		pos = entity->getPosition();
+		rad = entity->getRadius();
+		/* If position is less than radius (too far to the left)
+		 * or if position is more than maxX+radius (too far to the right)*/
+		if (pos.x < -rad || pos.x > maxX + rad) {
+			delete entity;
+		}
+		/* Else if position y is more than maxY+rad (below the bottom of the screen) */
+		else if (pos.y > maxY + rad) {
+			delete entity;
+		}
+		/* Else if the entitytype is a projectile and 
+		 * the position is lower than radius (Over the top of the screen) */
+		else if (EntityType::PROJECTILE == entity->getType() && pos.y < -rad) {
+			delete entity;
+		}
+		else {
+			remainingEntities.push_back(entity);
 		}
 	}
+	mEntities = remainingEntities;
 }
 
 bool ConGame::overlap(Entity *entity0, Entity *entity1) {
@@ -139,65 +241,20 @@ bool ConGame::overlap(Vector2f pos0, float rad0, Vector2f pos1, float rad1) {
 	return deltaX * deltaX + deltaY * deltaY < radiusSum * radiusSum;
 }
 
-Sprite ConGame::createSprite(string filename, Vector2f position) {
-	Sprite sprite;
-	sprite.setTexture(mTextureManager.getRef(filename));
-	sprite.setOrigin(
-		Vector2f(
-			sprite.getGlobalBounds().height / 2,
-			sprite.getGlobalBounds().width / 2
-		)
-	);
-	sprite.setPosition(position);
-	
-	return sprite;
-}
-
-void ConGame::updateEntities(float deltaTime) {
-	for (EntityVector::size_type i = 0; i < mEntities.size(); i++) {
-		mEntities[i]->update(deltaTime);
-	}
-}
-
-void ConGame::draw(Sprite& sprite) {
-	mRenderWindow.draw(sprite);
-}
-
 void ConGame::drawEntities() {
+	drawEntities(EntityType::PROJECTILE);
+	drawEntities(EntityType::SHIP);
+	drawEntities(EntityType::EFFECT);
+}
+
+void ConGame::drawEntities(EntityType type) {
 	for (EntityVector::size_type i = 0; i < mEntities.size(); i++) {
 		Entity *entity = mEntities[i];
-		entity->draw();
+		if (entity->getType() == type)
+			entity->draw();
 	}
 }
 
-void ConGame::handleWindowEvents() {
-	Event event;
-	while (mRenderWindow.pollEvent(event)) {
-		if (event.type == Event::Closed || Keyboard::isKeyPressed(Keyboard::Escape)) {
-			mRenderWindow.close();
-		}
-	}
-}
-
-Vector2f ConGame::getWindowSize() const{
-	return Vector2f(mRenderWindow.getSize());
-}
-
-void ConGame::remove(Entity *entity) {
-	mOldEntities.push_back(entity);
-}
-
-bool ConGame::isVisible(Entity *entity) {
-	Vector2f pos = entity->getPosition();
-	/* Checks if the entity is visible (Inside the gameWindow)
-	 * First checks if it's outside the y-axis, then checks the x-axis.
-	 * If any of these conditions is true, that an entity is outside the window
-	 * it returns false
-	 */
-	if ((pos.y < 0 || pos.y > float(mRenderWindow.getSize().y))
-		|| (pos.x < 0 || pos.x > float(mRenderWindow.getSize().x))) return false;
-	else return true;
-}
 // Random stuff
 mt19937 ConGame::createGenerator() {
 	random_device randomDevice;
@@ -212,4 +269,27 @@ bool ConGame::getRandomBoolean(float probability) {
 float ConGame::getRandomFloat(float min, float max) {
 	uniform_real_distribution<float> distribution(min, max);
 	return distribution(mGenerator);
+}
+
+// Text stuff
+void ConGame::createText() {
+	mFont.loadFromFile("gfx/arial.ttf");
+	mText.setFont(mFont);
+	mText.setString("Init...");
+	mText.setCharacterSize(24);
+	mText.setFillColor(Color::White);
+	mText.setOutlineThickness(1.0f);
+	mText.setPosition(10, 10);
+}
+
+void ConGame::updateText() {
+	if (!mGameOver) {
+		int survTime = (int)mTime;
+		mScoreText = "Time Alive: " + to_string(survTime) + "\nKills: " + to_string(killedInvaders);
+	}
+	mText.setString(mScoreText);
+}
+
+void ConGame::drawText() {
+	mRenderWindow.draw(mText);
 }

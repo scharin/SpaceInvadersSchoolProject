@@ -14,9 +14,11 @@ public:
 	virtual sf::Vector2f getWindowSize() const = 0;
 	virtual sf::Sprite createSprite(std::string filename, sf::Vector2f position) = 0;
 	virtual void run() = 0;
+	virtual void add(Entity *entity) = 0;
 	virtual void remove(Entity *entity) = 0;
 	virtual void draw(sf::Sprite &sprite) = 0;
-	virtual bool isVisible(Entity *entity) = 0;
+	virtual void gameOver(bool gameover) = 0;
+	virtual void updateKills() = 0;
 };
 
 #endif

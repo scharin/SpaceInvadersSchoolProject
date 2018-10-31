@@ -3,6 +3,8 @@
 
 #include "SFML/Graphics.hpp"
 #include "Entity.h"
+#include "BulletEntity.h"
+#include "ExplosionEntity.h"
 
 class ShipEntity : public Entity
 {
@@ -15,9 +17,11 @@ public:
 	EntityType getType() const override;
 
 private:
+	float mFireTime;
+
 	void updatePosition(float deltaTime);
 	void constrainPosition();
-	void handleFire();
+	void handleFire(float deltaTime);
 };
 
 #endif

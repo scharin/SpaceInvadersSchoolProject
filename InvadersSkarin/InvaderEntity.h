@@ -3,6 +3,8 @@
 
 #include "SFML/Graphics.hpp"
 #include "Entity.h"
+#include "BulletEntity.h"
+#include "ExplosionEntity.h"
 
 class InvaderEntity : public Entity
 {
@@ -16,9 +18,10 @@ public:
 
 private:
 	void updatePosition(float deltaTime);
-	void handleFire();
+	void handleFire(float deltaTime);
 
 	sf::Vector2f mDirection;
+	float mFireTime;
 };
 
 #endif

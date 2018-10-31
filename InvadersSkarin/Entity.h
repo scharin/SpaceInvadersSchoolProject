@@ -25,6 +25,7 @@ public:
 	void draw();
 	sf::Vector2f getPosition() const;
 	float getRadius() const;
+	bool isVisible() const;
 
 protected:
 	// Variables each entity has

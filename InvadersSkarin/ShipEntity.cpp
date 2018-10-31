@@ -4,13 +4,15 @@
 namespace {
 	const float RADIUS = 30.0f;
 	const float VELOCITY = 400.0f;
+	const float FIRE_DELTA = .3f;
 }
 
 using namespace sf;
 using namespace std;
 
 ShipEntity::ShipEntity(Game *game, Vector2f position) :
-	Entity(game)
+	Entity(game),
+	mFireTime(0)
 {
 	mSprite = mGame->createSprite("ship", position);
 	mRadius = RADIUS;
@@ -20,23 +22,27 @@ ShipEntity::~ShipEntity()
 {
 }
 
-EntityFaction ShipEntity::getFaction() const {
-	return EntityFaction::FRIEND;
-}
-EntityType ShipEntity::getType() const {
-	return EntityType::SHIP;
-}
-void ShipEntity::collide(Entity *otherEntity) {
-	if (otherEntity->getFaction() == EntityFaction::ENEMY) {
-		mGame->remove(this);
-	}
-}
-
 void ShipEntity::update(float deltaTime) {
 	updatePosition(deltaTime);
 	constrainPosition();
-	handleFire();
+	handleFire(deltaTime);
 }
+
+void ShipEntity::collide(Entity *otherEntity) {
+	if (otherEntity->getFaction() == EntityFaction::ENEMY) {
+		mGame->remove(this);
+		mGame->gameOver(true);
+	}
+}
+
+EntityFaction ShipEntity::getFaction() const {
+	return EntityFaction::FRIEND;
+}
+
+EntityType ShipEntity::getType() const {
+	return EntityType::SHIP;
+}
+
 void ShipEntity::updatePosition(float deltaTime) {
 	float directionX = 0.0f;
 	float directionY = 0.0f;
@@ -81,8 +87,19 @@ void ShipEntity::constrainPosition() {
 	Vector2f shipPosition(shipX, shipY);
 	mSprite.setPosition(shipPosition);
 }
-void ShipEntity::handleFire() {
-	if (Keyboard::isKeyPressed(Keyboard::Space)) {
-		cout << "Do pew pew stuff \n";
+void ShipEntity::handleFire(float deltaTime) {
+	mFireTime += deltaTime;
+	if (Keyboard::isKeyPressed(Keyboard::Space) && FIRE_DELTA < mFireTime) {
+		EntityFaction faction = EntityFaction::FRIEND;
+		Vector2f position = mSprite.getPosition();
+		Vector2f direction1 = Vector2f(0.0f, -1.0f);
+		Vector2f direction2 = Vector2f(.5f, -1.0f);
+		Vector2f direction3 = Vector2f(-.5f, -1.0f);
+
+		mGame->add(new BulletEntity(mGame, faction, position, direction1));
+		mGame->add(new BulletEntity(mGame, faction, position, direction2));
+		mGame->add(new BulletEntity(mGame, faction, position, direction3));
+
+		mFireTime = 0.0f;
 	}
 }
