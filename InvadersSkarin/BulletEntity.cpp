@@ -30,10 +30,10 @@ EntityFaction BulletEntity::getFaction() const {
 }
 
 void BulletEntity::collide(Entity *otherEntity) {
-	EntityFaction opositFaction;
-	if (mFaction == EntityFaction::ENEMY) opositFaction = EntityFaction::FRIEND;
-	else opositFaction = EntityFaction::ENEMY;
-	if (otherEntity->getFaction() == opositFaction && otherEntity->getType() == EntityType::SHIP) {
+	EntityFaction oppositeFaction;
+	if (mFaction == EntityFaction::ENEMY) oppositeFaction = EntityFaction::FRIEND;
+	else oppositeFaction = EntityFaction::ENEMY;
+	if (otherEntity->getFaction() == oppositeFaction && otherEntity->getType() == EntityType::SHIP) {
 		mGame->remove(this);
 	}
 }
