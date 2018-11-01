@@ -242,8 +242,8 @@ bool ConGame::overlap(Vector2f pos0, float rad0, Vector2f pos1, float rad1) {
 }
 
 void ConGame::drawEntities() {
-	drawEntities(EntityType::PROJECTILE);
 	drawEntities(EntityType::SHIP);
+	drawEntities(EntityType::PROJECTILE);
 	drawEntities(EntityType::EFFECT);
 }
 
