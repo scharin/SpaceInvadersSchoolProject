@@ -1,1 +1,1 @@
-PDF and/or Solutions for programmingcoursestuff. Ignore, it's horrible. Really.
+C++ SchoolProject for the course programming methodology, a simple game of Space Invaders.
